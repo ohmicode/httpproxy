@@ -21,8 +21,12 @@ public class TransitThread extends Thread {
     public void run() {
         try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
             String inputLine = readStream(socket.getInputStream());
-            String response = transit(inputLine);
-            out.println(response);
+            if (!inputLine.isEmpty()) {
+                String response = transit(inputLine);
+                out.println(response);
+            } else {
+                System.out.println(">>>>>>> Empty request processed <<<<<<<");
+            }
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -35,7 +39,11 @@ public class TransitThread extends Thread {
         int length;
         do {
             length = stream.read(buff);
-            line += new String(buff, 0, length);
+            if (length > 0) {
+                line += new String(buff, 0, length);
+            } else {
+                System.out.printf(">>>>>>> read %s bytes <<<<<<<%n", length);
+            }
         } while (length == buff.length);
         return line;
     }
@@ -56,6 +64,7 @@ public class TransitThread extends Thread {
         return builder.toString();
     }
 
+    //TODO: handle responses with Transfer-Encoding: chunked
     private String transit(String httpRequest) {
         String request = injectProfileId(httpRequest);
         String response = null;
